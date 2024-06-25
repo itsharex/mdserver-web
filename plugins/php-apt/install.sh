@@ -14,8 +14,8 @@ if id www &> /dev/null ;then
     echo "www shell is `grep "^www:" /etc/passwd |cut -d':' -f7 `"
 else
     groupadd www
-	# useradd -g www -s /sbin/nologin www
-	useradd -g www -s /bin/bash www
+	useradd -g www -s /sbin/nologin www
+	# useradd -g www -s /bin/bash www
 fi
 
 _os=`uname`
@@ -73,6 +73,16 @@ if [ "${action}" == "uninstall" ] && [ -d ${serverPath}/php-apt/${type} ];then
 	#初始化 
 	cd ${rootPath} && python3 ${rootPath}/plugins/php-apt/index.py stop ${type}
 	cd ${rootPath} && python3 ${rootPath}/plugins/php-apt/index.py initd_uninstall ${type}
+
+	if [ -f /lib/systemd/system/php${apt_ver}-fpm.service ];then
+		rm -rf /lib/systemd/system/php${apt_ver}-fpm.service
+	fi
+
+	if [ -f /lib/systemd/system/system/php${apt_ver}-fpm.service ];then
+		rm -rf /lib/systemd/system/php${apt_ver}-fpm.service
+	fi
+
+	systemctl daemon-reload
 fi
 
 cd ${curPath} && sh -x $curPath/versions/$2/install.sh $1
@@ -100,6 +110,7 @@ if [ "${action}" == "install" ] && [ -d ${serverPath}/php-apt/${type} ];then
 	cd ${rootPath}/plugins/php-apt/versions && bash common.sh ${apt_ver} install mbstring
 	cd ${rootPath}/plugins/php-apt/versions && bash common.sh ${apt_ver} install zip
 	cd ${rootPath}/plugins/php-apt/versions && bash common.sh ${apt_ver} install mongodb
+	cd ${rootPath}/plugins/php-apt/versions && bash common.sh ${apt_ver} install opcache
 	echo "install PHP-APT[${type}] extend end"
 
 	if [ ! -f /usr/local/bin/composer ];then
